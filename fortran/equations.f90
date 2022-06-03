@@ -9,7 +9,10 @@
     real(dl), intent(in) :: a
     real(dl) :: dtauda, grhoa2, grhov_t
 
-    call this%CP%DarkEnergy%BackgroundDensityAndPressure(this%grhov, a, grhov_t)
+    !VM BEGINS
+    !call this%CP%DarkEnergy%BackgroundDensityAndPressure(this%grhov, a, grhov_t)
+    grhov_t = this%grhov*this%CP%DarkEnergy%grhot_de(a)
+    !VM ENDS
 
     !  8*pi*G*rho*a**4.
     grhoa2 = this%grho_no_de(a) +  grhov_t * a**2
@@ -2205,7 +2208,11 @@
         grhov_t = State%grhov * a2
         w_dark_energy_t = -1_dl
     else
-        call State%CP%DarkEnergy%BackgroundDensityAndPressure(State%grhov, a, grhov_t, w_dark_energy_t)
+        !VM BEGINS
+        !call State%CP%DarkEnergy%BackgroundDensityAndPressure(State%grhov, a, grhov_t, w_dark_energy_t)
+        grhov_t = State%grhov*State%CP%DarkEnergy%grhot_de(a)
+        w_dark_energy_t = State%CP%DarkEnergy%w_de(a)
+        !VM ENDS
     end if
 
     !total perturbations: matter terms first, then add massive nu, de and radiation
@@ -2298,10 +2305,11 @@
         ayprime(ix_etak)=0.5_dl*dgq + State%curv*z
     end if
 
-    if (.not. EV%is_cosmological_constant) &
-        call State%CP%DarkEnergy%PerturbationEvolve(ayprime, w_dark_energy_t, &
-        EV%w_ix, a, adotoa, k, z, ay)
-
+    !VM BEGINS
+    !if (.not. EV%is_cosmological_constant) &
+    !    call State%CP%DarkEnergy%PerturbationEvolve(ayprime, w_dark_energy_t, EV%w_ix, a, adotoa, k, z, ay)
+    !VM ENDS
+    
     !  CDM equation of motion
     clxcdot=-k*z
     ayprime(ix_clxc)=clxcdot
@@ -2781,12 +2789,15 @@
                     opacity, dopacity, ddopacity, visibility, dvisibility, ddvisibility, exptau)
             end if
             if (associated(EV%CustomSources)) then
-                select type(DE=>State%CP%DarkEnergy)
-                class is (TDarkEnergyEqnOfState)
-                    cs2_de = DE%cs2_lam
-                class default
-                    cs2_de=1
-                end select
+                !VM BEGINS
+                !select type(DE=>State%CP%DarkEnergy)
+                !class is (TDarkEnergyEqnOfState)
+                !    cs2_de = DE%cs2_lam
+                !class default
+                !    cs2_de=1
+                !end select
+                cs2_de = 1
+                !VM ENDS
                 block
                     procedure(TSource_func), pointer :: custom_sources_func
 
@@ -2862,8 +2873,11 @@
     grhoc_t=State%grhoc/a
     grhor_t=State%grhornomass/a2
     grhog_t=State%grhog/a2
-    call CP%DarkEnergy%BackgroundDensityAndPressure(State%grhov, a, grhov_t, w_dark_energy_t)
-
+    !VM BEGINS
+    !call CP%DarkEnergy%BackgroundDensityAndPressure(State%grhov, a, grhov_t, w_dark_energy_t)
+    grhov_t = State%grhov*State%CP%DarkEnergy%grhot_de(a)
+    w_dark_energy_t = State%CP%DarkEnergy%w_de(a)
+    !VM ENDS
     grho=grhob_t+grhoc_t+grhor_t+grhog_t+grhov_t
     gpres=(grhog_t+grhor_t)/3._dl+grhov_t*w_dark_energy_t
 

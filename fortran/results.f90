@@ -935,7 +935,11 @@
 
     do i=1, n
         a = a_arr(i)
-        call this%CP%DarkEnergy%BackgroundDensityAndPressure(this%grhov, a, grhov_t)
+        !VM BEGINS
+        !call this%CP%DarkEnergy%BackgroundDensityAndPressure(this%grhov, a, grhov_t)
+        grhov_t = this%grhov*this%CP%DarkEnergy%grhot_de(a)
+        !VM ENDs
+
         grhonu = 0
 
         if (this%CP%Num_Nu_massive /= 0) then
@@ -1052,17 +1056,20 @@
     end subroutine GetComputedPKRedshifts
 
     subroutine CAMBdata_DarkEnergyStressEnergy(this, a, grhov_t, w, n)
-    class(CAMBdata) :: this
-    integer, intent(in) :: n
-    real(dl), intent(in) :: a(n)
-    real(dl), intent(out) :: grhov_t(n), w(n)
-    integer i
+        class(CAMBdata) :: this
+        integer, intent(in) :: n
+        real(dl), intent(in) :: a(n)
+        real(dl), intent(out) :: grhov_t(n), w(n)
+        integer i
 
-    do i=1, n
-        call this%CP%DarkEnergy%BackgroundDensityAndPressure(1._dl, a(i), grhov_t(i), w(i))
-    end do
-    grhov_t = grhov_t/a**2
-
+        do i=1, n
+            !VM BEGINS
+            !call this%CP%DarkEnergy%BackgroundDensityAndPressure(1._dl, a(i), grhov_t(i), w(i))
+            grhov_t(i) = 1._dl*this%CP%DarkEnergy%grhot_de(a(i))
+            w(i) = this%CP%DarkEnergy%w_de(a(i))
+            !VM ENDS
+        end do
+        grhov_t = grhov_t/a**2
     end subroutine CAMBdata_DarkEnergyStressEnergy
 
     function rofChi(this,Chi) !sinh(chi) for open, sin(chi) for closed.

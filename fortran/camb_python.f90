@@ -4,8 +4,11 @@
     use Precision
     use results
     use iso_c_binding
-    use DarkEnergyFluid
-    use DarkEnergyPPF
+    !VM BEGINS
+    !use DarkEnergyFluid
+    !use DarkEnergyPPF
+    use DarkEnergyInterface
+    !VM ENDS
     use ObjectLists
     use classes
     implicit none
