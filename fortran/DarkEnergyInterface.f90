@@ -10,7 +10,7 @@ private
         logical :: is_cosmological_constant = .true.
         integer :: num_perturb_equations = 0
         real(dl) :: w_lam = -1_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
-        real(dl) :: wa = 0._dl !may not be used, just for compatibility with e.g. halofit
+        real(dl) :: wa = 0._dl    
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
     contains
