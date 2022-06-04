@@ -150,7 +150,9 @@
         class(TInitialPower), allocatable :: InitPower
         class(TRecombinationModel), allocatable :: Recomb
         class(TReionizationModel), allocatable :: Reion
+        !VM BEGINS
         class(TDarkEnergyModel), allocatable :: DarkEnergy
+        !VM ENDS
         class(TNonLinearModel), allocatable :: NonLinearModel
         type(AccuracyParams)     :: Accuracy
         type(SourceTermParams)   :: SourceTerms
@@ -188,32 +190,31 @@
 
         Type(TCustomSourceParams) :: CustomSources
     contains
-    procedure, nopass :: PythonClass => CAMBparams_PythonClass
-    procedure, nopass :: SelfPointer => CAMBparams_SelfPointer
-    procedure :: Replace => CAMBParams_Replace
-    procedure :: SetNeutrinoHierarchy => CAMBparams_SetNeutrinoHierarchy
-    procedure :: Validate => CAMBparams_Validate
-    procedure :: PrimordialPower => CAMBparams_PrimordialPower
-    procedure :: SetCustomSourcesFunc => CAMBparams_SetCustomSourcesFunc
-    procedure :: N_eff => CAMBparams_N_eff
+        procedure, nopass :: PythonClass => CAMBparams_PythonClass
+        procedure, nopass :: SelfPointer => CAMBparams_SelfPointer
+        procedure :: Replace => CAMBParams_Replace
+        procedure :: SetNeutrinoHierarchy => CAMBparams_SetNeutrinoHierarchy
+        procedure :: Validate => CAMBparams_Validate
+        procedure :: PrimordialPower => CAMBparams_PrimordialPower
+        procedure :: SetCustomSourcesFunc => CAMBparams_SetCustomSourcesFunc
+        procedure :: N_eff => CAMBparams_N_eff
     end type CAMBparams
 
     contains
 
     function CAMBparams_PythonClass()
-    character(LEN=:), allocatable :: CAMBparams_PythonClass
-    CAMBparams_PythonClass = 'CAMBparams'
+        character(LEN=:), allocatable :: CAMBparams_PythonClass
+        CAMBparams_PythonClass = 'CAMBparams'
     end function CAMBparams_PythonClass
 
     subroutine CAMBparams_SelfPointer(cptr,P)
-    use iso_c_binding
-    Type(c_ptr) :: cptr
-    Type (CAMBparams), pointer :: PType
-    class (TPythonInterfacedClass), pointer :: P
+        use iso_c_binding
+        Type(c_ptr) :: cptr
+        Type (CAMBparams), pointer :: PType
+        class (TPythonInterfacedClass), pointer :: P
 
-    call c_f_pointer(cptr, PType)
-    P => PType
-
+        call c_f_pointer(cptr, PType)
+        P => PType
     end subroutine CAMBparams_SelfPointer
 
     subroutine CAMBparams_Replace(this, replace_with)
