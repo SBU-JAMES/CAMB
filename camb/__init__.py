@@ -27,7 +27,7 @@ from .reionization import TanhReionization
 from .nonlinear import Halofit
 #VM BEGINS
 #from .dark_energy import DarkEnergyFluid, DarkEnergyPPF
-from .dark_energy import DarkEnergyInterface
+from .dark_energy import DarkEnergyModel
 #VM ENDS
 from .initialpower import InitialPowerLaw, SplinedInitialPower
 from .mathutils import threej
