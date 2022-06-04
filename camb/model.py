@@ -8,7 +8,7 @@ from . import recombination as recomb
 from . import constants
 from .initialpower import InitialPower, SplinedInitialPower
 from .nonlinear import NonLinearModel
-from .dark_energy import DarkEnergyModel, DarkEnergyEqnOfState
+from .dark_energy import DarkEnergyModel
 from .recombination import RecombinationModel
 from .sources import SourceWindow
 from . import bbn
@@ -563,8 +563,12 @@ class CAMBparams(F2003Class):
         else:
             return sum(self.nu_mass_degeneracies[:self.nu_mass_eigenstates]) + self.num_nu_massless
 
-    def set_classes(self, dark_energy_model=None, initial_power_model=None,
+    #VM BEGINS
+    #def set_classes(self, dark_energy_model=None, initial_power_model=None,
+    #                non_linear_model=None, recombination_model=None):
+    def set_classes(self, dark_energy_model='ppf', initial_power_model=None,
                     non_linear_model=None, recombination_model=None):
+    #VM ENDS
         """
         Change the classes used to implement parts of the model.
 
@@ -582,7 +586,10 @@ class CAMBparams(F2003Class):
         if recombination_model:
             self.Recomb = self.make_class_named(recombination_model, RecombinationModel)
 
-    def set_dark_energy(self, w=-1.0, cs2=1.0, wa=0, dark_energy_model='fluid'):
+    #VM BEGINS
+    #def set_dark_energy(self, w=-1.0, cs2=1.0, wa=0, dark_energy_model='fluid'):
+    def set_dark_energy(self, w=-1.0, wa=0, dark_energy_model='ppf'):
+    #VM ENDS
         r"""
         Set dark energy parameters (use set_dark_energy_w_a to set w(a) from numerical table instead)
         To use a custom dark energy model, assign the class instance to the DarkEnergy field instead.
@@ -594,26 +601,27 @@ class CAMBparams(F2003Class):
         :return: self
         """
 
-        de = self.make_class_named(dark_energy_model, DarkEnergyEqnOfState)
+        de = self.make_class_named(dark_energy_model, DarkEnergyModel)
         de.set_params(w=w, wa=wa, cs2=cs2)
         self.DarkEnergy = de
         return self
 
-    def set_dark_energy_w_a(self, a, w, dark_energy_model='fluid'):
-        """
-        Set the dark energy equation of state from tabulated values (which are cubic spline interpolated).
-
-        :param a: array of sampled a = 1/(1+z) values
-        :param w: array of w(a)
-        :param dark_energy_model:  model to use ('fluid' or 'ppf'), default is 'fluid'
-        :return: self
-        """
-        if dark_energy_model == 'fluid' and np.any(w < -1):
-            raise CAMBError('fluid dark energy model does not support w crossing -1')
-        self.DarkEnergy = self.make_class_named(dark_energy_model, DarkEnergyEqnOfState)
-        # Note that assigning to allocatable fields makes deep copies of the object
-        self.DarkEnergy.set_w_a_table(a, w)
-        return self
+    #VM BEGINS
+    #def set_dark_energy_w_a(self, a, w, dark_energy_model='fluid'):
+    #    """
+    #    Set the dark energy equation of state from tabulated values (which are cubic spline interpolated).
+    #    :param a: array of sampled a = 1/(1+z) values
+    #    :param w: array of w(a)
+    #    :param dark_energy_model:  model to use ('fluid' or 'ppf'), default is 'fluid'
+    #    :return: self
+    #    """
+    #    if dark_energy_model == 'fluid' and np.any(w < -1):
+    #        raise CAMBError('fluid dark energy model does not support w crossing -1')
+    #    self.DarkEnergy = self.make_class_named(dark_energy_model, DarkEnergyEqnOfState)
+    #    # Note that assigning to allocatable fields makes deep copies of the object
+    #    self.DarkEnergy.set_w_a_table(a, w)
+    #    return self
+    #VM ENDS
 
     def get_zre(self):
         return self.Reion.get_zre(self)
