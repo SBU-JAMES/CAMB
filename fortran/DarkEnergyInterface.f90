@@ -65,6 +65,7 @@ contains
         class(TDarkEnergyModel) :: this
         real(dl) :: w_de, al
         real(dl), intent(IN) :: a
+        
         if (a<0.5) then
             w_de = this%w_lam
         else 
@@ -77,13 +78,15 @@ contains
         
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
-        real(dl) :: res
+        real(dl) :: res, amid
         
-         if (a<0.5) then
-             res = a**(-3*(this%w_lam+1))*a**4
-         else
-             res = a**(-3*(this%wa+1))*0.5**(-3*(this%w_lam-this%wa))*a**4
-         end if
+        amid = 0.5 
+        
+        if (a < amid) then
+            res = a**(-3*this%w_lam + 1)
+        else
+            res = a**(-3*this%wa + 1) * amid**(-3*(this%w_lam - this%wa))
+        end if
     
          !if (this%wa /= 0) then
             !res = res*exp(-3. * this%wa * (1._dl - a))
