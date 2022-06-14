@@ -82,7 +82,7 @@ contains
          if (a<0.5) then
              res = a**(-3*(this%w_lam+1))
          else
-             res = a**(-3*(this%w_a+1))*a**(-3*(this%w_lam-this%w_a))
+             res = a**(-3*(this%wa+1))*a**(-3*(this%w_lam-this%wa))
          end if
     
          !if (this%wa /= 0) then
