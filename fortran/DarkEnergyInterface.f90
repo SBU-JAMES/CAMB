@@ -65,8 +65,11 @@ contains
         class(TDarkEnergyModel) :: this
         real(dl) :: w_de, al
         real(dl), intent(IN) :: a
-
-        w_de = this%w_lam+ this%wa*(1._dl-a)
+        if (a<0.5) then
+            w_de = this%w_lam
+        else 
+            w_de = this%wa
+        end if
 
     end function w_de  
 
@@ -75,12 +78,17 @@ contains
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
         real(dl) :: res
-
-        res = a ** (1._dl - 3. * this%w_lam - 3. * this%wa)
-        if (this%wa /= 0) then
-            res = res*exp(-3. * this%wa * (1._dl - a))
-        endif
         
+         if (a<0.5) then
+             res = a**(-3*(this%w_lam+1))
+         else
+             res = a**(-3*(this%w_a+1))*a**(-3*(this%w_lam-this%w_a))
+         end if
+    
+         !if (this%wa /= 0) then
+            !res = res*exp(-3. * this%wa * (1._dl - a))
+         !endif
+     
     end function grho_de
 
     function grhot_de(this, a) result(res) ! Get grhov_t = 8*pi*rho_de*a**2
