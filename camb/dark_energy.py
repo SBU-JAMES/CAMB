@@ -3,7 +3,7 @@ from .baseconfig import F2003Class, fortran_class, numpy_1d, CAMBError, np, \
 from ctypes import c_int, c_double, byref, POINTER, c_bool
 
 @fortran_class
- class DarkEnergyModel(F2003Class):
+class DarkEnergyModel(F2003Class):
     
     _fortran_class_module_ = 'DarkEnergyInterface'
     _fortran_class_name_ = 'TDarkEnergyModel'
