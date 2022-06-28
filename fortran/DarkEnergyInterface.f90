@@ -123,20 +123,20 @@ contains
                      
             
             if (this%abound3<a) then
-                w_de = this%w0
+                w_de = this%w3
             end if
             
             if (a<this%abound3) then
-                w_de = this%w1
+                w_de = this%w2
             end if
             
             if (a<this%abound2) then
-                w_de = this%w2
+                w_de = this%w1
              
             end if
          
             if (a<this%abound1) then
-                w_de = this%w3
+                w_de = this%w0
                 
             end if
             
