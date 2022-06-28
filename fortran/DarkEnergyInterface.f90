@@ -10,9 +10,20 @@ private
         logical :: is_cosmological_constant = .true.
         integer :: num_perturb_equations = 0
         real(dl) :: w_lam = -1_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
-        real(dl) :: wa = 0._dl    
+        real(dl) :: wa = 0._dl 
+        real(dl) :: w0 = 0._dl
+        real(dl) :: w1 = 0._dl
+        real(dl) :: w2 = 0._dl
+        real(dl) :: w3 = 0._dl
+        real(dl) :: abound1 = 0._dl
+        real(dl) :: abound2 = 0._dl
+        real(dl) :: abound3 = 0._dl
+        real(dl) :: amid = 0._dl
+        real(dl), dimension (5) :: alpha
+        integer :: sim = 1
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
+        
     contains
         procedure :: Init
         procedure :: ReadParams 
@@ -53,44 +64,193 @@ contains
 
         this%w_lam = Ini%Read_Double('w', -1.d0)
         this%wa = Ini%Read_Double('wa', 0.d0)
+        this%w0 = Ini%Read_Double('w0', 0.d0)
+        this%w1 = Ini%Read_Double('w1', 0.d0)
+        this%w2 = Ini%Read_Double('w2', 0.d0)
+        this%w3 = Ini%Read_Double('w3', 0.d0)
+        this%abound1 = Ini%Read_Double('abound1', 0.d0)
+        this%abound2 = Ini%Read_Double('abound2', 0.d0)
+        this%abound3 = Ini%Read_Double('abound3', 0.d0)
+        this%amid = Ini%Read_Double('amid', 0.d0)
+        this%alpha = Ini%Read_Double_Array('alpha', 1)
+        this%sim = Ini%Read_Int('sim', 1)
         
-        if (this%w_lam + this%wa > 0) then
-            error stop 'w + wa > 0, giving w>0 at high redshift'
-        endif
+       ! if (this%w_lam + this%wa > 0) then
+        !    error stop 'w + wa > 0, giving w>0 at high redshift'
+        !endif
 
     end subroutine ReadParams
 
+
     function w_de(this, a)
 
+        
         class(TDarkEnergyModel) :: this
-        real(dl) :: w_de, al
+        real(dl) :: w_de, al, i, j, temp, a_min
         real(dl), intent(IN) :: a
         
-        if (a<0.5) then
+        a_min=0
+        
+        if (this%sim==0) then !wa, w0 model (original)
+            if (a<0.5) then
             w_de = this%w_lam
-        else 
+            else 
             w_de = this%wa
+            end if
+            
+            if (a<a_min) then
+                w_de=-1
+            end if
+            
         end if
+        
+        if (this%sim==1)then  !two-step model 
+            
+            
+            if (a>this%amid) then
+                w_de = this%w_lam
+            else 
+                w_de = this%wa
+            end if
+            
+            if (a<a_min) then
+                w_de=-1
+            end if
+            
+        end if
+        
+        if (this%sim==2)then   !four-step model 
+                     
+            
+            if (this%abound3<a) then
+                w_de = this%w0
+            end if
+            
+            if (a<this%abound3) then
+                w_de = this%w1
+            end if
+            
+            if (a<this%abound2) then
+                w_de = this%w2
+             
+            end if
+         
+            if (a<this%abound1) then
+                w_de = this%w3
+                
+            end if
+            
+            if (a<a_min) then
+                w_de=-1
+            end if
+            
+         end if
+         
+         if (this%sim==3)then  !natural log model 
+         
+             if (a<a_min) then
+                  w_de=-1
+             end if
+             
+              i=1
+              j=5
+              temp=0
+              do while (i<=j)
+                  temp=temp + (this%alpha(i)*(log(a**-1))**(i)) 
+                  i=i+1
+              end do  
+               
+              w_de = -1 + temp
+              
+              
+            
+          end if
 
     end function w_de  
+    
+           
 
     function grho_de(this, a) result(res) ! relative density (8 pi G a^4 rho_de / grhov)
         
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
-        real(dl) :: res, amid
+        real(dl) :: res, i, j, temp, a_min
         
-        amid = 0.5 
+        a_min=0
         
-        if (a < amid) then
-            res = a**(-3*this%w_lam + 1)
-        else
-            res = a**(-3*this%wa + 1) * amid**(-3*(this%w_lam - this%wa))
+        if (this%sim==0)then !wa, w0 model (original)
+            if (this%wa /= 0) then
+                res = res*exp(-3. * this%wa * (1._dl - a))
+            
+            endif
+            
         end if
-    
-         !if (this%wa /= 0) then
-            !res = res*exp(-3. * this%wa * (1._dl - a))
-         !endif
+        
+        if (this%sim==1)then !two-step model
+           
+          
+        
+            if (a > this%amid) then
+                res = a**(-3*this%w_lam + 1)
+            else
+                res = a**(-3*this%wa + 1) * this%amid**(-3*(this%w_lam - this%wa))
+            end if
+            
+            if (a<a_min) then
+                res=a**4
+            end if
+        
+        end if
+        
+        if (this%sim==2)then !four-step model
+            
+                      
+            
+            
+            if (this%abound3<a) then
+                 res = a**(-3*this%w3 + 1)
+                 
+            end if
+            
+           
+            if (a<this%abound3) then
+                res = a**(-3*this%w2 + 1) * this%abound3**(-3*(this%w3 - this%w2))
+            end if
+            
+            if (a<this%abound2) then
+                res = a**(-3*this%w1 + 1) * this%abound3**(-3*(this%w3 - this%w2))* this%abound2**(-3*(this%w2-this%w1))
+            end if
+         
+            if (a<this%abound1) then
+                res = a**(-3*this%w0 + 1) *this%abound3**(-3*(this%w3 - this%w2)) * &
+                     this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0))
+            end if
+          
+            
+            if (a<a_min) then
+                res=a**4
+            end if
+        
+        end if
+        
+        if (this%sim==3)then !natural log model
+            
+            if (a<a_min) then
+                  res = a**(4)
+            end if
+              
+              i=1
+              j=5
+              temp=0
+              do while (i<=j)
+                  temp=temp + (this%alpha(i)*(log(a**-1))**(i))/(i+1) 
+                  i=i+1
+              end do  
+               
+              res = a**(-3*temp+4)  
+         end if 
+      
+         
      
     end function grho_de
 
@@ -102,7 +262,7 @@ contains
 
         if (a > 1e-10) then ! Ensure a valid result
             res = this%grho_de(a) / (a * a)
-        else
+        else 
             res = 0._dl
         end if
 
@@ -163,7 +323,7 @@ contains
         S_Gamma = grhov_t * (1 + w) * (vT + sigma) * k / adotoa / 2._dl / k2
         ckH = this%c_Gamma_ppf * k / adotoa
 
-        if (ckH * ckH .gt. 3.d1) then ! ckH^2 > 30 ?????????
+        if (ckH * ckH .gt. 3.d1) then ! ckH^2 > 30 
             Gamma = 0
             Gammadot = 0.d0
         else
