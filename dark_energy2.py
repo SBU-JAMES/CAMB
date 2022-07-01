@@ -16,33 +16,32 @@ class DarkEnergyModel(F2003Class):
         ("w2", c_double),
         ("w3", c_double),
         ("w4", c_double),
-        ("w5", c_double),
-        ("a1", c_double),
-        ("a2", c_double),
-        ("a3", c_double),
         ("a_min", c_double),
-        ("state", c_int),
+        ("abound1", c_double),
+        ("abound2", c_double),
+        ("abound3", c_double),
+        ("de_sim", c_int),
+        ("c_Gamma_ppf", c_double, "-dw/da(0)"),
         ("__no_perturbations", c_bool, "turn off perturbations (unphysical, so hidden in Python)")
     ]
                 
-#    def validate_params(self):
-#        if self.wa + self.w > 0:
-#            raise CAMBError('dark energy model has w + wa > 0, giving w>0 at high redshift')
-#        return True
+    def validate_params(self):
+        if self.wa + self.w > 0:
+            raise CAMBError('dark energy model has w + wa > 0, giving w>0 at high redshift')
+        return True
 
-    def set_params(self, w0=-1.0, w1=0, w2=0, w3=0, w4=0, w5=0, a1=0.25, a2=0.5, a3=0.75, a_min=0.0005, state=0):
+    def set_params(self, w0 = -1, w1 = 0, w2 = 0, w3 = 0, w4 = 0, a_min = 0.25, abound1 = 0.35, abound2 = 0.5, abound3 = 0.75, de_sim = 1):
         self.w0 = w0
         self.w1 = w1
         self.w2 = w2
         self.w3 = w3
         self.w4 = w4
-        self.w5 = w5
-        self.a1 = a1
-        self.a2 = a2
-        self.a3 = a3
         self.a_min = a_min
-        self.state = state
-#        self.validate_params()
+        self.abound1 = abound1
+        self.abound2 = abound2
+        self.abound3 = abound3
+        self.de_sim = de_sim
+        #self.validate_params()
 
 # short names for models that support w/wa
 F2003Class._class_names.update({'ppf': DarkEnergyModel})

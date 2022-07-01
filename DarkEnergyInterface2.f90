@@ -7,22 +7,24 @@ module DarkEnergyInterface
 private
 
     type, extends(TCambComponent) :: TDarkEnergyModel
+    
         logical :: is_cosmological_constant = .true.
-        integer :: num_perturb_equations = 0
-        real(dl) :: w0 = -1_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
-        real(dl) :: w1 = 0._dl
-        real(dl) :: w2 = 0._dl
-        real(dl) :: w3 = 0._dl
-        real(dl) :: w4 = 0._dl
-        real(dl) :: w5 = 0._dl
-        real(dl) :: a1 = 0.25_dl
-        real(dl) :: a2 = 0.5_dl
-        real(dl) :: a3 = 0.75_dl
-        real(dl) :: a_min = 0.0005_dl
-        integer :: state = 0
+        integer :: num_perturb_equations = 1
+        real(dl) :: w0 = -1.0_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
+        real(dl) :: w1 = 0.0_dl 
+        real(dl) :: w2 = 0.0_dl
+        real(dl) :: w3 = 0.0_dl
+        real(dl) :: w4 = 0.0_dl
+        real(dl) :: a_min = 0.0_dl
+        real(dl) :: abound1 = 0.0_dl
+        real(dl) :: abound2 = 0.0_dl
+        real(dl) :: abound3 = 0.0_dl
+        integer :: de_sim = 0
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
+        
     contains
+    
         procedure :: Init
         procedure :: ReadParams 
         procedure :: w_de
@@ -36,6 +38,7 @@ private
         procedure, nopass :: SelfPointer => TDarkEnergyModel_SelfPointer
         procedure, nopass :: PythonClass => TDarkEnergyModel_PythonClass
         procedure, private :: setcgammappf
+    
     end type TDarkEnergyModel
 
     public TDarkEnergyModel
@@ -65,114 +68,130 @@ contains
         this%w2 = Ini%Read_Double('w2', 0.d0)
         this%w3 = Ini%Read_Double('w3', 0.d0)
         this%w4 = Ini%Read_Double('w4', 0.d0)
-        this%w5 = Ini%Read_Double('w5', 0.d0)
-        this%a1 = Ini%Read_Double('a1', 0.25d0)
-        this%a2 = Ini%Read_Double('a2', 0.5d0)
-        this%a3 = Ini%Read_Double('a3', 0.75d0)
-        this%a_min = Ini%Read_Double('a_min', 0.0005d0)
-        this%state = Ini%Read_Int('state', 0)
+        this%abound1 = Ini%Read_Double('abound1', 0.d0)
+        this%abound2 = Ini%Read_Double('abound2', 0.d0)
+        this%abound3 = Ini%Read_Double('abound3', 0.d0)
+        this%a_min = Ini%Read_Double('a_min', 0.d0)
+        this%de_sim = Ini%Read_Int('de_sim', 0)
         
-!        if (this%w_lam + this%wa > 0) then                             -- valid parameter test (here and in python class)?
-!            error stop 'w + wa > 0, giving w>0 at high redshift'
-!        endif
-
     end subroutine ReadParams
 
-    function w_de(this, a)
 
+    function w_de(this, a)
         class(TDarkEnergyModel) :: this
+        integer :: i
         real(dl) :: w_de
         real(dl), intent(IN) :: a
-        integer :: i
-        real(dl), dimension (5) :: w_list
+        real(dl), dimension (4) :: alpha
         
-        if (this%state == 0) then
-            w_de = this%w0 + this%w1*(1._dl-a)
+        if (this%de_sim == 0) then !wa, w0 model (original)
+            
+            w_de = this%w0 + this%w1*(1._dl-a)         
         
-        else if (this%state == 1) then
-            if (a > this%a3) then
-                w_de = this%w3
-            else if (a > this%a2) then
-                w_de = this%w2
-            else if (a > this%a1) then
-                w_de = this%w1
-            else if (a > this%a_min) then
+        else if (this%de_sim == 1)then  !two-step model 
+        
+            if (a < this%a_min) then
+                w_de = -1
+            else if (a < this%abound1) then
                 w_de = this%w0
+            else 
+                w_de = this%w1
+            end if         
+        
+        else if (this%de_sim == 2)then   !four-step model                  
+        
+            if (a < this%a_min) then
+                w_de = -1
+            else if (a < this%abound1) then
+                w_de = this%w0
+            else if (a < this%abound2) then
+                w_de = this%w1
+            else if (a < this%abound3) then
+                w_de = this%w2
+            else 
+                w_de = this%w3
+            end if           
+        
+        else if (this%de_sim == 3) then  !natural log model 
+        
+            if (a < this%a_min) then
+                w_de = -1
             else
-                w_de = -1.0   
-! -- is a_min implementation here and in grho for step function good? What about for log form? Original w-wa form?
-            end if            
-       
-       else
-           
-           ! w_de = this%w0
-           if (a > this%a_min) then
-               w_de = this%w0
-               w_list(1) = this%w1
-               w_list(2) = this%w2
-               w_list(3) = this%w3
-               w_list(4) = this%w4
-               w_list(5) = this%w5
-               do i = 1, 5, 1
-                   w_de = w_de + w_list(i)*(log(a**(-1))**i)
-               end do
-           else
-               w_de = -1.0
-           end if         
-       
-       end if
+                alpha(1) = this%w1
+                alpha(2) = this%w2
+                alpha(3) = this%w3
+                alpha(4) = this%w4
+
+                w_de = this%w0
+                do i = 1, 4, 1
+                    w_de = w_de + alpha(i)*(log(1.0/a))**(i)
+                end do  
+            endif    
+        
+        end if
 
     end function w_de  
-
+    
+    
     function grho_de(this, a) result(res) ! relative density (8 pi G a^4 rho_de / grhov)
         
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
-        real(dl) :: res
-        real(dl), dimension (5) :: w_list
         integer :: i
-     
-        if (this%state == 0) then
+        real(dl) :: res
+        real(dl), dimension (4) :: alpha
+
+        if (this%de_sim == 0)then !wa, w0 model (original)
+            
             res = a ** (1._dl - 3. * this%w0 - 3. * this%w1)
-            if (this%w1 /= 0) then
+            if (this%w1 /= 0) then 
                 res = res*exp(-3. * this%w1 * (1._dl - a))
             endif
         
-        else if (this%state == 1) then
-        
-            if (a > this%a3) then
-                res = a**(-3*this%w3 + 1)
-            else if (a > this%a2) then
-                res = a**(-3*this%w2 + 1) * this%a3**(-3*(this%w3 - this%w2))
-            else if (a > this%a1) then
-                res = a**(-3*this%w1 + 1) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1))
-            else if (a > this%a_min) then
-                res = a**(-3*this%w0 + 1) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1)) * this%a1**(-3*(this%w1 - this%w0))
+        else if (this%de_sim == 1) then !two-step model
+           
+            if (a < this%a_min) then
+                res = a**4
+            else if (a < this%abound1) then
+                res = a**(-3*this%w1 + 1) * this%abound1**(-3*(this%w0 - this%w1))
             else
-                res = (a**4) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1)) * this%a1**(-3*(this%w1 - this%w0)) * this%a_min**(-3*(this%w0 + 1))
+                res = a**(-3*this%w0 + 1)
             end if
-            
-        else
-           ! res = a**(-3*this%w0 + 1)
-           w_list(1) = this%w1
-           w_list(2) = this%w2
-           w_list(3) = this%w3
-           w_list(4) = this%w4
-           w_list(5) = this%w5
-           if (a > this%a_min) then
-               res = a**(-3*this%w0 + 1)
-               do i = 1, 5, 1
-                   res = res * a**(-3*w_list(i)*(log(a**(-1))**i))
-               end do
-           else
-               res = a**4
-               do i = 1, 5, 1
-                   res = res * this%a_min**(-3*w_list(i)*(log(this%a_min**(-1))**i))
-               end do                                ! -- is my above boundary condition for transition at a_min correct?
-           end if            
         
+        else if (this%de_sim == 2) then !four-step model
+            
+            if (a < this%a_min) then
+                res = a**4
+            else if (a < this%abound1) then
+                res = a**(-3*this%w0 + 1) * this%abound3**(-3*(this%w3 - this%w2)) * &
+                    this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0))
+            else if (a < this%abound2) then
+                res = a**(-3*this%w1 + 1) * this%abound3**(-3*(this%w3 - this%w2)) * &
+                    this%abound2**(-3*(this%w2-this%w1))
+            else if (a < this%abound3) then
+                res = a**(-3*this%w2 + 1) * this%abound3**(-3*(this%w3 - this%w2))
+            else 
+                res = a**(-3*this%w3 + 1)   
+            end if
+        
+        else if (this%de_sim == 3)then !natural log model
+            
+            if (a < this%a_min) then
+                res = a**(4)
+            else
+                alpha(1) = this%w1
+                alpha(2) = this%w2
+                alpha(3) = this%w3
+                alpha(4) = this%w4
+
+                res = a**(-3*this%w0 + 1)
+                do i = 1, 4, 1
+                    res = res + (alpha(i)*(log(1.0/a))**(i))/(i+1) 
+                end do   
+            endif
+
         end if 
-     
+      
     end function grho_de
 
     function grhot_de(this, a) result(res) ! Get grhov_t = 8*pi*rho_de*a**2
@@ -183,7 +202,7 @@ contains
 
         if (a > 1e-10) then ! Ensure a valid result
             res = this%grho_de(a) / (a * a)
-        else
+        else 
             res = 0._dl
         end if
 
@@ -193,6 +212,7 @@ contains
         
         class(TDarkEnergyModel), intent(inout) :: this
         real(dl), intent(out) :: w, wa
+        
         w = this%w0
         wa = this%w1
     
@@ -204,7 +224,7 @@ contains
         integer, intent(in) :: FeedbackLevel
 
         if (FeedbackLevel >0) then
-            write(*,'("(w0, wa) = (", f8.5,", ", f8.5, ")")') this%w0, this%w1          ! -- Other locations where w0 and w1 are called?
+            write(*,'("(w0, wa) = (", f8.5,", ", f8.5, ")")') this%w0, this%w1
         endif 
 
     end subroutine PrintFeedback
@@ -244,7 +264,7 @@ contains
         S_Gamma = grhov_t * (1 + w) * (vT + sigma) * k / adotoa / 2._dl / k2
         ckH = this%c_Gamma_ppf * k / adotoa
 
-        if (ckH * ckH .gt. 3.d1) then ! ckH^2 > 30 ?????????
+        if (ckH * ckH .gt. 3.d1) then ! ckH^2 > 30 
             Gamma = 0
             Gammadot = 0.d0
         else
