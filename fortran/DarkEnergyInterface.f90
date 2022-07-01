@@ -9,18 +9,17 @@ private
     type, extends(TCambComponent) :: TDarkEnergyModel
         logical :: is_cosmological_constant = .true.
         integer :: num_perturb_equations = 0
-        real(dl) :: w_lam = -1_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
-        real(dl) :: wa = 0._dl 
-        real(dl) :: w0 = 0._dl
+        real(dl) :: w0 = -1_dl !p/rho for the dark energy (an effective value, used e.g. for halofit)
         real(dl) :: w1 = 0._dl
         real(dl) :: w2 = 0._dl
         real(dl) :: w3 = 0._dl
+        real(dl) :: w4 = 0._dl
+        real(dl) :: a_min = 0._dl
         real(dl) :: abound1 = 0._dl
         real(dl) :: abound2 = 0._dl
         real(dl) :: abound3 = 0._dl
-        real(dl) :: amid = 0._dl
         real(dl), dimension (5) :: alpha
-        integer :: sim = 1
+        integer :: de_sim = 1
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
         
@@ -62,22 +61,19 @@ contains
         class(TDarkEnergyModel) :: this
         class(TIniFile), intent(in) :: Ini
 
-        this%w_lam = Ini%Read_Double('w', -1.d0)
-        this%wa = Ini%Read_Double('wa', 0.d0)
-        this%w0 = Ini%Read_Double('w0', 0.d0)
+        
+        this%w0 = Ini%Read_Double('w0', -1.d0)
         this%w1 = Ini%Read_Double('w1', 0.d0)
         this%w2 = Ini%Read_Double('w2', 0.d0)
         this%w3 = Ini%Read_Double('w3', 0.d0)
+        this%w4 = Ini%Read_Double('w4', 0.d0)
         this%abound1 = Ini%Read_Double('abound1', 0.d0)
         this%abound2 = Ini%Read_Double('abound2', 0.d0)
         this%abound3 = Ini%Read_Double('abound3', 0.d0)
-        this%amid = Ini%Read_Double('amid', 0.d0)
-        this%alpha = Ini%Read_Double_Array('alpha', 1)
-        this%sim = Ini%Read_Int('sim', 1)
+        this%a_min = Ini%Read_Double('a_min', 0.d0)
+        this%de_sim = Ini%Read_Int('de_sim', 1)
         
-       ! if (this%w_lam + this%wa > 0) then
-        !    error stop 'w + wa > 0, giving w>0 at high redshift'
-        !endif
+      
 
     end subroutine ReadParams
 
@@ -86,84 +82,79 @@ contains
 
         
         class(TDarkEnergyModel) :: this
-        real(dl) :: w_de, al, i, j, temp, a_min
+        real(dl) :: w_de
         real(dl), intent(IN) :: a
+        integer :: i
+        real(dl), dimension (4) :: alpha
         
-        a_min=0
         
-        if (this%sim==0) then !wa, w0 model (original)
+        
+        if (this%de_sim==0) then !wa, w0 model (original)
             if (a<0.5) then
-            w_de = this%w_lam
-            else 
-            w_de = this%wa
-            end if
-            
-            if (a<a_min) then
-                w_de=-1
-            end if
-            
-        end if
-        
-        if (this%sim==1)then  !two-step model 
-            
-            
-            if (a>this%amid) then
-                w_de = this%w_lam
-            else 
-                w_de = this%wa
-            end if
-            
-            if (a<a_min) then
-                w_de=-1
-            end if
-            
-        end if
-        
-        if (this%sim==2)then   !four-step model 
-                     
-            
-            if (this%abound3<a) then
-                w_de = this%w3
-            end if
-            
-            if (a<this%abound3) then
-                w_de = this%w2
-            end if
-            
-            if (a<this%abound2) then
+                w_de = this%w0
+            else if (a>this%a_min) then
                 w_de = this%w1
-             
+            else 
+                w_de=-1
             end if
-         
-            if (a<this%abound1) then
+            
+            
+            
+        end if
+        
+        if (this%de_sim==1)then  !two-step model 
+            
+            if (a<this%a_min) then
+                w_de=-1
+            
+            else if (a<this%abound1) then
+                w_de = this%w0
+            else 
+                w_de = this%w1
+            end if
+            
+            
+        end if
+        
+        if (this%de_sim==2)then   !four-step model 
+                     
+            if (a<this%a_min) then
+                w_de=-1
+            
+            else if (a<this%abound1) then
                 w_de = this%w0
                 
+            else if (a<this%abound2) then
+                w_de = this%w1
+                
+            else if (a<this%abound3) then
+                w_de=this%w2
+            else
+                w_de=this%w3
+              
             end if
             
-            if (a<a_min) then
-                w_de=-1
-            end if
+   
             
          end if
          
-         if (this%sim==3)then  !natural log model 
+         if (this%de_sim == 3)then  !natural log model 
          
-             if (a<a_min) then
+             if (a < this%a_min) then
                   w_de=-1
-             end if
-             
-              i=1
-              j=5
-              temp=0
-              do while (i<=j)
-                  temp=temp + (this%alpha(i)*(log(a**-1))**(i)) 
-                  i=i+1
-              end do  
-               
-              w_de = -1 + temp
+             else
+                alpha(1) = this%w1
+                alpha(2) = this%w2
+                alpha(3) = this%w3
+                alpha(4) = this%w4
+
+                w_de = this%w0
+                
+                do i = 1, 4, 1
+                    w_de = w_de + alpha(i)*(log(1.0/a))**(i)
+                end do  
+            endif    
               
-              
-            
           end if
 
     end function w_de  
@@ -174,80 +165,72 @@ contains
         
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
-        real(dl) :: res, i, j, temp, a_min
+        real(dl) :: res
+        real(dl), dimension (4) :: alpha
+        integer :: i
         
-        a_min=0
+       
         
-        if (this%sim==0)then !wa, w0 model (original)
-            if (this%wa /= 0) then
-                res = res*exp(-3. * this%wa * (1._dl - a))
-            
+        if (this%de_sim == 0)then !wa, w0 model (original)
+             
+             res = a ** (1._dl - 3. * this%w0 - 3. * this%w1)
+            if (this%w1 /= 0) then 
+                res = res*exp(-3. * this%w1 * (1._dl - a))
             endif
             
         end if
         
-        if (this%sim==1)then !two-step model
-           
-          
         
-            if (a > this%amid) then
-                res = a**(-3*this%w_lam + 1)
+        if (this%de_sim==1)then !two-step model
+           
+        
+            if (a < this%a_min) then
+                res = a**4 * this%abound1**(-3*(this%w1 - this%w0)) *this%a_min**(-3*(this%w0+1))
+                
+            else if (a < this%abound1) then
+                res = a**(-3*this%w0 + 1) * this%abound1**(-3*(this%w1 - this%w0))
             else
-                res = a**(-3*this%wa + 1) * this%amid**(-3*(this%w_lam - this%wa))
+                res = a**(-3*this%w1 + 1)
             end if
             
-            if (a<a_min) then
-                res=a**4
-            end if
-        
         end if
         
-        if (this%sim==2)then !four-step model
+        if (this%de_sim==2)then !four-step model
             
-                      
-            
-            
-            if (this%abound3<a) then
-                 res = a**(-3*this%w3 + 1)
-                 
-            end if
-            
-           
-            if (a<this%abound3) then
+           if (a < this%a_min) then
+                res = a**4 * this%abound3**(-3*(this%w3 - this%w2)) * &
+                    this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0)) * this%a_min**(-3*(this%w0+1))
+                
+            else if (a < this%abound1) then
+                res = a**(-3*this%w0 + 1) * this%abound3**(-3*(this%w3 - this%w2)) * &
+                    this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0))
+            else if (a < this%abound2) then
+                res = a**(-3*this%w1 + 1) * this%abound3**(-3*(this%w3 - this%w2)) * &
+                    this%abound2**(-3*(this%w2-this%w1))
+            else if (a < this%abound3) then
                 res = a**(-3*this%w2 + 1) * this%abound3**(-3*(this%w3 - this%w2))
-            end if
-            
-            if (a<this%abound2) then
-                res = a**(-3*this%w1 + 1) * this%abound3**(-3*(this%w3 - this%w2))* this%abound2**(-3*(this%w2-this%w1))
-            end if
-         
-            if (a<this%abound1) then
-                res = a**(-3*this%w0 + 1) *this%abound3**(-3*(this%w3 - this%w2)) * &
-                     this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0))
-            end if
-          
-            
-            if (a<a_min) then
-                res=a**4
+            else 
+                res = a**(-3*this%w3 + 1)   
             end if
         
         end if
         
-        if (this%sim==3)then !natural log model
+        if (this%de_sim==3)then !natural log model
             
-            if (a<a_min) then
-                  res = a**(4)
-            end if
-              
-              i=1
-              j=5
-              temp=0
-              do while (i<=j)
-                  temp=temp + (this%alpha(i)*(log(a**-1))**(i))/(i+1) 
-                  i=i+1
-              end do  
-               
-              res = a**(-3*temp+4)  
+           if (a < this%a_min) then
+                res = a**(4)
+            else
+                alpha(1) = this%w1
+                alpha(2) = this%w2
+                alpha(3) = this%w3
+                alpha(4) = this%w4
+
+                res = a**(-3*this%w0 + 1)
+                do i = 1, 4, 1
+                    res = res + (alpha(i)*(log(1.0/a))**(i))/(i+1) 
+                end do   
+            endif
+ 
          end if 
       
          
@@ -272,8 +255,8 @@ contains
         
         class(TDarkEnergyModel), intent(inout) :: this
         real(dl), intent(out) :: w, wa
-        w = this%w_lam
-        wa = this%wa
+        w = this%w0
+        wa = this%w1
     
     end subroutine Effective_w_wa
 
@@ -283,7 +266,7 @@ contains
         integer, intent(in) :: FeedbackLevel
 
         if (FeedbackLevel >0) then
-            write(*,'("(w0, wa) = (", f8.5,", ", f8.5, ")")') this%w_lam, this%wa
+            write(*,'("(w0, wa) = (", f8.5,", ", f8.5, ")")') this%w0, this%w1
         endif 
 
     end subroutine PrintFeedback
