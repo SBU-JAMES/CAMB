@@ -143,10 +143,10 @@ contains
              if (a < this%a_min) then
                   w_de=-1
              else
-                alpha(1) = this%w1
-                alpha(2) = this%w2
-                alpha(3) = this%w3
-                alpha(4) = this%w4
+                alpha(1) = this%w0
+                alpha(2) = this%w1
+                alpha(3) = this%w2
+                alpha(4) = this%w3
 
                 w_de = this%w0
                 
@@ -217,19 +217,24 @@ contains
         
         if (this%de_sim==3)then !natural log model
             
-           if (a < this%a_min) then
-                res = a**(4)
+                alpha(1) = this%w0
+                alpha(2) = this%w1
+                alpha(3) = this%w2
+                alpha(4) = this%w3
+          
+          if (a < this%a_min) then
+                res= a**(4)
+                do i = 1, 4, 1
+                    res = res + (alpha(i)*(log(1.0/a))**(i))/(i+1) 
+                end do
+                   
             else
-                alpha(1) = this%w1
-                alpha(2) = this%w2
-                alpha(3) = this%w3
-                alpha(4) = this%w4
-
                 res = a**(-3*this%w0 + 1)
                 do i = 1, 4, 1
                     res = res + (alpha(i)*(log(1.0/a))**(i))/(i+1) 
-                end do   
+                end do 
             endif
+
  
          end if 
       
