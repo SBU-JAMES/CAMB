@@ -223,7 +223,7 @@ contains
                 alpha(4) = this%w3
           
           if (a < this%a_min) then
-                res = this%a_min**(-3*this%w0 + 1)
+                res = this%a_min**(4)
                 do i = 1, 4, 1
                     res = res + (alpha(i)*(log(1.0/this%a_min))**(i))/(i+1) 
                 end do
