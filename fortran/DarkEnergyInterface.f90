@@ -15,10 +15,10 @@ private
         real(dl) :: w3 = 0._dl
         real(dl) :: w4 = 0._dl
         real(dl) :: w5 = 0._dl
-        real(dl) :: a1 = 0.25_dl
-        real(dl) :: a2 = 0.5_dl
-        real(dl) :: a3 = 0.75_dl
-        real(dl) :: a_min = 0.0005_dl
+        real(dl) :: a1 = 0.8_dl
+        real(dl) :: a2 = 0.6_dl
+        real(dl) :: a3 = 0.4_dl
+        real(dl) :: a_min = 0.25_dl
         integer :: state = 0
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical
@@ -66,10 +66,10 @@ contains
         this%w3 = Ini%Read_Double('w3', 0.d0)
         this%w4 = Ini%Read_Double('w4', 0.d0)
         this%w5 = Ini%Read_Double('w5', 0.d0)
-        this%a1 = Ini%Read_Double('a1', 0.25d0)
-        this%a2 = Ini%Read_Double('a2', 0.5d0)
-        this%a3 = Ini%Read_Double('a3', 0.75d0)
-        this%a_min = Ini%Read_Double('a_min', 0.0005d0)
+        this%a1 = Ini%Read_Double('a1', 0.8d0)
+        this%a2 = Ini%Read_Double('a2', 0.6d0)
+        this%a3 = Ini%Read_Double('a3', 0.4d0)
+        this%a_min = Ini%Read_Double('a_min', 0.25d0)
         this%state = Ini%Read_Int('state', 0)
         
 !        if (this%w_lam + this%wa > 0) then                             -- valid parameter test (here and in python class)?
@@ -90,14 +90,14 @@ contains
             w_de = this%w0 + this%w1*(1._dl-a)
         
         else if (this%state == 1) then
-            if (a > this%a3) then
-                w_de = this%w3
-            else if (a > this%a2) then
-                w_de = this%w2
-            else if (a > this%a1) then
-                w_de = this%w1
-            else if (a > this%a_min) then
+            if (a > this%a1) then
                 w_de = this%w0
+            else if (a > this%a2) then
+                w_de = this%w1
+            else if (a > this%a3) then
+                w_de = this%w2
+            else if (a > this%a_min) then
+                w_de = this%w3
             else
                 w_de = -1.0   
 ! -- is a_min implementation here and in grho for step function good? What about for log form? Original w-wa form?
@@ -138,26 +138,16 @@ contains
             endif
         
         else if (this%state == 1) then
-!            if (a > this%a3) then
-!                res = a**(-3*this%w3 + 1) * this%a3**(-3*(this%w2 - this%w3)) * this%a2**(-3*(this%w1 - this%w2)) * this%a1**(-3*(this%w0 - this%w1))
-!            else if (a > this%a2) then
-!                res = a**(-3*this%w2 + 1) * this%a2**(-3*(this%w1 - this%w2)) * this%a1**(-3*(this%w0 - this%w1))
-!            else if (a > this%a1) then
-!                res = a**(-3*this%w1 + 1) * this%a1**(-3*(this%w0 - this%w1))
-!            else
-!                res = a**(-3*this%w0 + 1)
-!            end if                          ! -- is the order of these boundary conditions correct (i.e. different from integrating over z)
-
-            if (a > this%a3) then
-                res = a**(-3*this%w3 + 1)
+            if (a > this%a1) then
+                res = a**(-3*this%w0 + 1)
             else if (a > this%a2) then
-                res = a**(-3*this%w2 + 1) * this%a3**(-3*(this%w3 - this%w2))
-            else if (a > this%a1) then
-                res = a**(-3*this%w1 + 1) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1))
+                res = a**(-3*this%w1 + 1) * this%a1**(-3*(this%w0 - this%w1))
+            else if (a > this%a3) then
+                res = a**(-3*this%w2 + 1) * this%a1**(-3*(this%w0 - this%w1)) * this%a2**(-3*(this%w1 - this%w2))
             else if (a > this%a_min) then
-                res = a**(-3*this%w0 + 1) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1)) * this%a1**(-3*(this%w1 - this%w0))
+                res = a**(-3*this%w3 + 1) * this%a1**(-3*(this%w0 - this%w1)) * this%a2**(-3*(this%w1 - this%w2)) * this%a3**(-3*(this%w2 - this%w3))
             else
-                res = (a**4) * this%a3**(-3*(this%w3 - this%w2)) * this%a2**(-3*(this%w2 - this%w1)) * this%a1**(-3*(this%w1 - this%w0)) * this%a_min**(-3*(this%w0 + 1))
+                res = (a**4) * this%a1**(-3*(this%w0 - this%w1)) * this%a2**(-3*(this%w1 - this%w2)) * this%a3**(-3*(this%w2 - this%w3)) * this%a_min**(-3*(this%w3 + 1))
             end if
             
 
@@ -175,7 +165,7 @@ contains
                    res = res * a**(-3*w_list(i)*(log(a**(-1))**i))
                end do
            else
-               res = a**4
+               res = a**4*this%a_min**(-3*this%w0-3)
                do i = 1, 5, 1
                    res = res * this%a_min**(-3*w_list(i)*(log(this%a_min**(-1))**i))
                end do                                ! -- is my above boundary condition for transition at a_min correct?

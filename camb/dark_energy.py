@@ -30,7 +30,7 @@ class DarkEnergyModel(F2003Class):
 #            raise CAMBError('dark energy model has w + wa > 0, giving w>0 at high redshift')
 #        return True
 
-    def set_params(self, w0=-1.0, w1=0, w2=0, w3=0, w4=0, w5=0, a1=0.25, a2=0.5, a3=0.75, a_min=0.0005, state=0):
+    def set_params(self, w0=-1.0, w1=0, w2=0, w3=0, w4=0, w5=0, a1=0.8, a2=0.6, a3=0.4, a_min=0.25, state=0):
         self.w0 = w0
         self.w1 = w1
         self.w2 = w2
