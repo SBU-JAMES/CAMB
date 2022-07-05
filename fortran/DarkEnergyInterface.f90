@@ -18,7 +18,6 @@ private
         real(dl) :: abound1 = 0._dl
         real(dl) :: abound2 = 0._dl
         real(dl) :: abound3 = 0._dl
-        real(dl), dimension (5) :: alpha
         integer :: de_sim = 1
         real(dl) :: c_Gamma_ppf = 0.4_dl
         logical :: no_perturbations = .false. !Don't change this, no perturbations is unphysical

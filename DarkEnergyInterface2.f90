@@ -177,7 +177,7 @@ contains
         else if (this%de_sim == 3)then !natural log model
             
             if (a < this%a_min) then
-                res = a**(4)
+                res = a**4
             else
                 alpha(1) = this%w1
                 alpha(2) = this%w2
