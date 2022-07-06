@@ -223,15 +223,15 @@ contains
                 alpha(4) = this%w4
           
           if (a < this%a_min) then
-                res = (a**4)*this%a_min**(-3*this%w0 + 1)
+                res = (a**4)*this%a_min**(-3*this%w0 - 3)
                 do i = 1, 4, 1
-                    res = res * this%a_min**( -3*(alpha(i)*(log(1.0/this%a_min))**(i+1))/(i+1))
+                    res = res * this%a_min**( -3*(alpha(i)*(log(1.0/this%a_min))**(i))/(i+1))
                 end do
                    
             else
                 res = a**(-3*this%w0 + 1)
                 do i = 1, 4, 1
-                    res = res * a**(-3*(alpha(i)*(log(1.0/a))**(i+1))/(i+1))
+                    res = res * a**(-3*(alpha(i)*(log(1.0/a))**(i))/(i+1))
                 end do 
             endif
 
