@@ -78,8 +78,7 @@ contains
 
 
     function w_de(this, a)
-
-        
+    
         class(TDarkEnergyModel) :: this
         real(dl) :: w_de
         real(dl), intent(IN) :: a
@@ -149,33 +148,26 @@ contains
         integer :: i
            
         if (this%de_sim == 0)then !wa, w0 model (original)
-             
-             res = a ** (1._dl - 3. * this%w0 - 3. * this%w1)
+            res = a ** (1._dl - 3. * this%w0 - 3. * this%w1)
             if (this%w1 /= 0) then 
                 res = res*exp(-3. * this%w1 * (1._dl - a))
             endif
-            
         end if
          
         if (this%de_sim==1)then !two-step model
-        
             if (a < this%a_min) then
                 res = a**4 * this%abound1**(-3*(this%w1 - this%w0)) *this%a_min**(-3*(this%w0+1))
-                
             else if (a < this%abound1) then
                 res = a**(-3*this%w0 + 1) * this%abound1**(-3*(this%w1 - this%w0))
             else
                 res = a**(-3*this%w1 + 1)
             end if
-            
         end if
         
-        if (this%de_sim==2)then !four-step model
-            
+        if (this%de_sim==2)then !four-step model 
            if (a < this%a_min) then
                 res = a**4 * this%abound3**(-3*(this%w3 - this%w2)) * &
                     this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0)) * this%a_min**(-3*(this%w0+1))
-                
             else if (a < this%abound1) then
                 res = a**(-3*this%w0 + 1) * this%abound3**(-3*(this%w3 - this%w2)) * &
                     this%abound2**(-3*(this%w2 - this%w1)) * this%abound1**(-3*(this%w1 - this%w0))
@@ -190,8 +182,7 @@ contains
         
         end if
         
-        if (this%de_sim==3)then !natural log model
-            
+        if (this%de_sim==3)then !natural log model    
             alpha(1) = this%w1
             alpha(2) = this%w2
             alpha(3) = this%w3
@@ -201,15 +192,13 @@ contains
                 res = (a**4)*this%a_min**(-3*this%w0 - 3)
                 do i = 1, 4, 1
                     res = res * this%a_min**(-3*(alpha(i)*(log(1.0/this%a_min))**(i))/(i+1))
-                end do
-                   
+                end do     
             else
                 res = a**(-3*this%w0 + 1)
                 do i = 1, 4, 1
                     res = res * a**(-3*(alpha(i)*(log(1.0/a))**(i))/(i+1))
                 end do 
             endif
-
         end if 
            
     end function grho_de
