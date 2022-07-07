@@ -42,8 +42,7 @@ private
     
 contains
 
-    subroutine Init(this, State)
-        
+    subroutine Init(this, State)   
         use classes
         class(TDarkEnergyModel), intent(inout) :: this
         class(TCAMBdata), intent(in), target :: State
@@ -72,13 +71,11 @@ contains
         this%a_min = Ini%Read_Double('a_min', 0.d0)
         this%de_sim = Ini%Read_Int('de_sim', 1)
         
-      
-
     end subroutine ReadParams
 
 
     function w_de(this, a)
-    
+
         class(TDarkEnergyModel) :: this
         real(dl) :: w_de
         real(dl), intent(IN) :: a
@@ -140,7 +137,7 @@ contains
            
 
     function grho_de(this, a) result(res) ! relative density (8 pi G a^4 rho_de / grhov)
-        
+
         class(TDarkEnergyModel) :: this
         real(dl), intent(IN) :: a
         real(dl) :: res
